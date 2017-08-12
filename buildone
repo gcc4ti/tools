@@ -1,0 +1,46 @@
+#!/bin/sh
+# --------------------------------------------------------------------
+# This nifty batch script will compile one tool which is specified
+# on the commandline
+#
+# for example if we want to build ttpack we will call this tool:
+# buildone.bat ttpack
+#
+# if upx is found in the path it will pack the executables otherwise
+# they stay in their original form
+#
+# at the end of the batch script the final executable is moved into
+# the calctools bin directory
+# --------------------------------------------------------------------
+if [ -z "$CC" ] ; then
+echo CC environment variable not defined, assuming CC=gcc
+CC=gcc
+fi
+
+if [ -z "`$CC --version | grep mingw`" -a -z "`$CC --version | grep msys`" -a -z "`$CC --version | grep cygwin`" ] ; then
+out=$1
+else
+out=$1.exe
+fi
+
+echo compiling $1 to $out...
+$CC -Os -Wall -W -Wp,-D_FORTIFY_SOURCE=2 -s -o $out $1.c
+if [ $? -ne 0 ] ; then
+echo compilation failed
+exit 1
+fi
+
+if type upx >/dev/null 2>/dev/null ; then
+echo compressing file
+upx --best $out >/dev/null 2>/dev/null
+else
+echo compression skipped
+fi
+
+if [ -f $out ] ; then
+echo moving executable ...
+mkdir -p bin
+mv $out bin/
+fi
+
+exit 0
